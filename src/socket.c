@@ -52,7 +52,6 @@ int orion_getHostByName(const char* name, char* buffer)
     struct addrinfo hints, *res, *res0 = NULL;
     struct sockaddr_in * target = NULL;
     int error;
-    char *tmp = NULL;
     
     memset(&hints, 0, sizeof(struct addrinfo));
     
@@ -72,15 +71,24 @@ int orion_getHostByName(const char* name, char* buffer)
         target = (struct sockaddr_in *) res->ai_addr;
         if (target)
         {
-            tmp = inet_ntoa(target->sin_addr);
-            if (tmp && strlen(tmp))
-            {
-                strncpy(buffer, tmp, strlen(tmp));
-                buffer[strlen(tmp)] = '\0';
-                if (res0)
-                    freeaddrinfo(res0);
-                return ORIONSOCKET_OK;
-            }
+           
+          switch (res->ai_family)
+          {
+           case AF_INET:
+             inet_ntop(AF_INET,&target->sin_addr,buffer,46);             
+        
+           case AF_INET6:
+             inet_ntop(AF_INET6,&((struct sockaddr_in6 *)target)->sin6_addr,buffer,46);
+             
+          }  
+            
+          if (buffer && strlen(buffer))
+          {
+            if (res0)
+              freeaddrinfo(res0);
+            return ORIONSOCKET_OK;
+          }
+          
         }
     }
     
